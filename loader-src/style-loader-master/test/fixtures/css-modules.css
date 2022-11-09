@@ -1,8 +1,0 @@
-:local(.myClassName) {
-  background: red;
-}
-
-:local(.myComposingClass) {
-  composes: className from './css-modules-local-scoped.css';
-  color: blue;
-}

@@ -1,5 +1,0 @@
-@value common from './common.module.css';
-
-.toolbar > .common {
-  background: orange;
-}
