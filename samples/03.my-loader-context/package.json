@@ -1,0 +1,9 @@
+{
+  "name": "03.my-loader-context",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "loader-runner": "^4.3.0"
+  }
+}

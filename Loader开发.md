@@ -35,12 +35,7 @@
                         // style-loader
                         { loader: 'style-loader' },
                         // css-loader
-                        {
-                            loader: 'css-loader',
-                            options: {
-                                modules: true
-                            }
-                        },
+                        { loader: 'css-loader' },
                         // sass-loader
                         { loader: 'sass-loader' }
                     ]
@@ -49,15 +44,100 @@
         }
     };
     ```
-
-
     * 执行时机
-webpack在编译（Compile）源代码时，会将import/require的模块，使用对应的loader进行代码转换
+webpack在编译（Compile）源代码时，会递归的处理被import/require的模块，使用对应的loader进行代码转换。
 
-* ### 相关概念
+  * loader分类
+    * 同步loader
+loader内部的处理中，如果都是以同步阻塞方式去执行的时候，此时我们可以将loader定义为同步loader，并交由webpack进行调用。比如在编写一个loader的时候，涉及到处理文本文件时，如果处理的文件比较小，我们就可以使用node的fs.readSync和fs.writeSync进行读写文件，那么此时的loader就可以考虑使用同步loader
+    * 异步loader
+与同步loader相对应，如果loader内部的处理中，有调用异步函数去做处理时，比如异步文件读写，或者需要发送http请求，此时我们可以将loader定义为异步loader，之后交由webpack进行调用。
+    * "Raw"loader
+我们来看下官网上的描述：
+    > By default, the resource file is converted to a UTF-8 string and passed to the loader. By setting the raw flag, the loader will receive the raw Buffer. Every loader is allowed to deliver its result as String or as Buffer. The compiler converts them between loaders.
+    * Pitching Loader
+    官网描述：
+    > Loaders are always called from right to left. There are some instances where the loader only cares about the metadata behind a request and can ignore the results of the previous loader. The pitch method on loaders is called from left to right before the loaders are actually executed (from right to left).
 
+    ```js
+    module.exports = {
+        //...
+        module: {
+            rules: [
+                {
+                    //...
+                    use: ['a-loader', 'b-loader', 'c-loader'],
+                },
+            ],
+        },
+    };
+    ```
 * ### 基础开发
+  * loader的Hello world (`src: 01.my-loader-hello-world`)
+loader是一个导出为函数的JS模块。
+    ```js
+    module.exports = function(source) {
+        return source;
+    }
+    ```
+  * [loader runner](https://www.npmjs.com/package/loader-runner)调试 (`src: 02.my-loader-loader-runner`)
+loader runner允许你在不安装webpack的情况下运行loaders
+作用：
+    * 作为webpack的依赖包，在webpack中使用它来执行loader
+    * 进行loader的开发和调试
+使用：
+    ```js
+    import { runLoaders } from "loader-runner";
 
+    runLoaders({
+        resource: "/path/to/resource",
+        loaders: ['/path/to/loader1', '/path/to/loader2'],
+        context: {},
+        readResource: fs.readFile.bind(fs)
+    }, function(err, result) {
+        // err: 如果有错误，通过改参数返回错误信息
+        // result: loader进行文件转换的结果
+    })
+    ```
+  * loader上下文 (`src: 03.my-loader-context`)
+    * this.context
+    > string，模块所在的目录 
+    * this.data
+    > object，在 pitch 阶段和 normal 阶段之间共享的 data 对象
+    * this.cacheable
+    > 函数，用于设置loader的处理结果是否可被缓存
+    默认情况下，loader 的处理结果会被标记为可缓存。调用这个方法然后传入 false，可以关闭 loader 处理结果的缓存能力。
+    一个可缓存的 loader 在输入和相关依赖没有变化时，必须返回相同的结果。
+    * this.callback
+    > 函数，同步/异步，通过调用该函数，可以返回模块处理好的结果。期望的参数为：
+    ```js
+    // 1. 第一个参数必须是 Error 或者 null
+    // 2. 第二个参数是一个 string 或者 Buffer。
+    // 当参数1和参数2同时传递时，loader会认为当前有错误，抛出异常而忽略content
+    // 3. 可选的：第三个参数必须是一个可以被 this module 解析的 source map。
+    // 4. 可选的：第四个参数，会被 webpack 忽略，可以是任何东西（例如一些元数据）。
+    this.callback(
+        err: Error | null,
+        content: string | Buffer,
+        sourceMap?: SourceMap,
+        meta?: any
+    );
+    ```
+    * this.async
+    > 告诉 loader-runner 这个 loader 将会异步地回调。返回 this.callback
+    * this.emitFile
+    > 产生一个文件(loader-runner没有传递该参数)
+  * 同步loader (`src: 04.my-loader-sync-loader`)
+  * 异步loader (`src: 05.my-loader-async-loader`)
+  * 多个loader的执行顺序 (`src: 06.my-loader-multiple-loaders`)
+  * raw loader (`src: 07.my-loader-raw-loader`)
+  **TODO:**
+  * pitching loader (`src: 08.my-loader-pitching-loader`)
+  **TODO:**
+  * 错误处理 (`src: 09.my-loader-error-handling`)
+  **TODO:**
+  * Logging (`src: 10.my-loader-logging`)
+  **TODO:**
 * ### 源码解读
 
 * ### 造个轮子

@@ -1,0 +1,9 @@
+{
+  "name": "04.my-loader-sync-loader",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "loader-runner": "^4.3.0"
+  }
+}
